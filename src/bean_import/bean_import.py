@@ -11,6 +11,27 @@ from rich.console import Console
 from rich.theme import Theme
 from typing_extensions import Annotated
 
+theme = Theme({
+    "number": "cyan",
+    "date": "orange4",
+    "flag": "magenta",
+    "error": "red",
+    "file": "grey50",
+    "string": "green",
+    "warning": "yellow",
+    "answer": "blue",
+    "pos": "green",
+    "neg": "orange_red1"
+})
+
+style = Style.from_dict({
+    "pos": "#008700",
+    "neg": "#ff5f00"
+})
+
+console = Console(theme=theme)
+err_console = Console(theme=theme, stderr=True)
+
 def period_callback(date_str: str):
     if not date_str: return date_str
     error = "Please enter a valid date format for --period (YYYY, YYYY-MM or YYYY-MM-DD)"
@@ -91,33 +112,13 @@ def bean_import(
     period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse transactions from in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
     account: Annotated[str, typer.Option("--account", "-a", help="Specify the account transactions belong to", callback=account_callback)]="",
     payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
-    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False,
+    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
     flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*"
 ):
     """
     Parse transactions for review and editing for a beancount LEDGER and output transaction entries to stdout
     """
 
-    theme = Theme({
-        "number": "cyan",
-        "date": "orange4",
-        "flag": "magenta",
-        "error": "red",
-        "file": "grey50",
-        "string": "green",
-        "warning": "yellow",
-        "answer": "blue",
-        "pos": "green",
-        "neg": "orange_red1"
-    })
-
-    style = Style.from_dict({
-        "pos": "#008700",
-        "neg": "#ff5f00"
-    })
-
-    console = Console(theme=theme)
-    err_console = Console(theme=theme, stderr=True)
     console_output = f"LEDGER File: [file]{ledger}[/]\nPAYEES File: [file]{payees}[/]"
     buffer = ''
 
