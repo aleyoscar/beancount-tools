@@ -2,6 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float, get_pending, get_matches
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load
+from .simplefin import simplefin_load
 from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar, valid_math_float
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
@@ -108,6 +109,7 @@ def get_posting(type, default_amount, default_currency, op_cur, completer, style
 def bean_import(
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     ofx: Annotated[Path, typer.Option("--ofx", "-x", help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
+    simplefin: Annotated[Path, typer.Option("--simplefin", "-s", help="The simplefin file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
     output: Annotated[Path, typer.Option("--output", "-o", help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
     period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse transactions from in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
     account: Annotated[str, typer.Option("--account", "-a", help="Specify the account transactions belong to", callback=account_callback)]="",
@@ -122,19 +124,23 @@ def bean_import(
     console_output = f"LEDGER File: [file]{ledger}[/]\nPAYEES File: [file]{payees}[/]"
     buffer = ''
 
-    if ofx: console_output += f"\nOFX File: [file]{ofx}[/]\n"
+    if ofx: console_output += f"\nOFX File: [file]{ofx}[/]"
+    if simplefin: console_output += f"\nSimpleFIN File: [file]{simplefin}[/]"
     if output: console_output +=  f"\nOUTPUT File: [file]{output}[/]"
     console.print(f"{console_output}")
 
     txn_data = None
 
-    # Parse ofx file into txn_data
+    # Parse file into txn_data
     if ofx:
         txn_data = ofx_load(err_console, ofx)
+    if simplefin:
+        txn_data = simplefin_load(console, simplefin)
+
     if txn_data and len(txn_data.transactions):
         console.print(f"Parsed [number]{len(txn_data.transactions)}[/] transactions")
     else:
-        err_console.print(f"[warning]No transactions found. Please provide either an ofx file or specify a simplefin account.[/]")
+        err_console.print(f"[warning]No transactions found. Please provide a valid file to parse.[/]")
         raise typer.Exit()
 
     # Parse ledger file into ledger_data

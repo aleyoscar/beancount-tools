@@ -23,6 +23,9 @@ def cur(num): return '{:.2f}'.format(float(num))
 
 def dec(num, dec='0.01'): return Decimal(num).quantize(Decimal(dec), rounding=ROUND_HALF_UP)
 
+def get_timestamp(str):
+    return int((datetime.strptime(str, "%Y-%m-%d") - datetime(1970, 1, 1)).total_seconds())
+
 def get_key(json_path, key):
     data = get_json(json_path)
     if key in data: return data[key]
