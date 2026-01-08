@@ -70,24 +70,17 @@ def get_posting(type, default_amount, default_currency, op_cur, completer, style
     return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
-    ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
+    ofx: Annotated[Path, typer.Option("--ofx", "-x", help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
     output: Annotated[Path, typer.Option("--output", "-o", help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
-    period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
-    account: Annotated[str, typer.Option("--account", "-a", help="Specify the account the ofx file belongs to", callback=account_callback)]="",
+    period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse transactions from in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
+    account: Annotated[str, typer.Option("--account", "-a", help="Specify the account transactions belong to", callback=account_callback)]="",
     payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
     operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False,
     flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*"
 ):
     """
-    Parse an OFX file based on a beancount LEDGER and output transaction entries to stdout
-
-    Optionally specify an --output file.
-    Optionally specify a time --period in the format YYYY, YYYY-MM or YYYY-MM-DD.
-    Optionally specify a the --account the ofx file belongs to.
-    Optionally specify a --payees json file to use for payee name substitutions.
-    Optionally skip the currency prompt when inserting and use the ledger's --operating-currency.
-    Optionally set the default --flag to set for transactions. [*/!]
+    Parse transactions for review and editing for a beancount LEDGER and output transaction entries to stdout
     """
 
     theme = Theme({
@@ -110,18 +103,22 @@ def bean_import(
 
     console = Console(theme=theme)
     err_console = Console(theme=theme, stderr=True)
-    console_output = f"OFX File: [file]{ofx}[/]\nLEDGER File: [file]{ledger}[/]\nPAYEES File: [file]{payees}[/]"
+    console_output = f"LEDGER File: [file]{ledger}[/]\nPAYEES File: [file]{payees}[/]"
     buffer = ''
 
+    if ofx: console_output += f"\nOFX File: [file]{ofx}[/]\n"
     if output: console_output +=  f"\nOUTPUT File: [file]{output}[/]"
     console.print(f"{console_output}")
 
-    # Parse ofx file into ofx_data
-    ofx_data = ofx_load(err_console, ofx)
-    if ofx_data and len(ofx_data.transactions):
-        console.print(f"Parsed [number]{len(ofx_data.transactions)}[/] transactions from OFX file")
+    txn_data = None
+
+    # Parse ofx file into txn_data
+    if ofx:
+        txn_data = ofx_load(err_console, ofx)
+    if txn_data and len(txn_data.transactions):
+        console.print(f"Parsed [number]{len(txn_data.transactions)}[/] transactions")
     else:
-        err_console.print(f"[warning]No transactions found in OFX file. Exiting.[/]")
+        err_console.print(f"[warning]No transactions found. Please provide either an ofx file or specify a simplefin account.[/]")
         raise typer.Exit()
 
     # Parse ledger file into ledger_data
@@ -138,25 +135,27 @@ def bean_import(
 
     # Filter transactions by dates specified from cli
     if period:
-        filtered = [t for t in ofx_data.transactions if t.date.startswith(period)]
+        filtered = [t for t in txn_data.transactions if t.date.startswith(period)]
         if len(filtered):
             console.print(f"Found [number]{len(filtered)}[/] transactions within period [date]{period}[/]")
         else:
             err_console.print(f"[warning]No transactions found within the specified period [date]{period}[/]. Exiting.[/]")
             raise typer.Exit()
     else:
-        filtered = ofx_data.transactions
+        filtered = txn_data.transactions
 
     # Check if account specified, else prompt
     if not account:
         account = prompt(
-            f"Beancount account OFX belongs to > ",
+            f"Beancount account transactions belong to > ",
             validator=valid_account,
             completer=account_completer)
-    console.print(f"OFX file using account: [answer]{account}[/]")
+    console.print(f"Transaction account: [answer]{account}[/]")
 
     # Match transactions not in beans into pending
-    pending = ofx_pending(filtered, ledger_data.transactions, account)
+    pending = []
+    if ofx:
+        pending = ofx_pending(filtered, ledger_data.transactions, account)
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:
@@ -183,7 +182,9 @@ def bean_import(
         # Reconcile
         if resolve[0] == "r":
             console.print(f"...Reconciling")
-            reconcile_matches = ofx_matches(txn, ledger_data.transactions, account)
+            reconcile_matches = []
+            if ofx:
+                reconcile_matches = ofx_matches(txn, ledger_data.transactions, account)
 
             # Matches found
             matches_canceled = False
@@ -271,7 +272,7 @@ def bean_import(
                 new_amount = eval_string_float(console, new_amount)
 
             # Add credit postings until total is equal to transaction amount
-            new_bean = ledger_bean(txn, ofx_data.account_id, flag)
+            new_bean = ledger_bean(txn, txn_data.account_id, flag)
             new_posting = None
             while new_bean.amount < new_amount:
                 console.print(f"\n{new_bean.print()}")
@@ -416,7 +417,7 @@ def bean_import(
                         break
                 if not found_account:
                     no_account_found = prompt(
-                        HTML(f"...OFX account <pos>{account}</pos> not found, continue anyways? [Y/n] > "),
+                        HTML(f"...Transaction account <pos>{account}</pos> not found, continue anyways? [Y/n] > "),
                         default='y',
                         bottom_toolbar=confirm_toolbar,
                         validator=ValidOptions(['y', 'n']),
