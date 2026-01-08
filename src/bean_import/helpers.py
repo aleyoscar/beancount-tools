@@ -1,5 +1,23 @@
 import json, os, re
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime
+
+class Transaction:
+    def __init__(self, id="", date=datetime.today(), payee="", amount=0.0):
+        self.id = id
+        self.date = date.strftime('%Y-%m-%d')
+        self.payee = payee
+
+        self.amount = float(amount)
+        self.abs_amount = abs(self.amount)
+        self.year = int(self.date.split('-')[0])
+
+    def __str__(self):
+        return f'{self.date} {self.payee} {cur(self.amount)}'
+
+    def print(self, theme=False):
+        if theme: return f'[date]{self.date}[/] [string]{self.payee}[/] [number]{cur(self.amount)}[/]'
+        else: return self.__str__
 
 def cur(num): return '{:.2f}'.format(float(num))
 
