@@ -76,3 +76,24 @@ def eval_string_float(console, text):
         return float(eval_string_dec(console, text))
     except Exception as e:
         console.print(f"[error]<<ERROR> Error converting expression to float: {str(e)}[/]")
+
+def get_pending(txns, beans, acct):
+    pending = []
+    for txn in txns:
+        found = False
+        for bean in beans:
+            for post in bean.entry.postings:
+                if 'rec' in post.meta and post.meta['rec'] == txn.id:
+                    found = True
+                    break
+        if not found:
+            pending.append(txn)
+    return pending
+
+def get_matches(txn, beans, acct):
+    matches = []
+    for bean in beans:
+        for post in bean.entry.postings:
+            if post.account == acct and 'rec' not in post.meta and abs(post.units.number) == dec(txn.abs_amount):
+                matches.append(bean)
+    return matches

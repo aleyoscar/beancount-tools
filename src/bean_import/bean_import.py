@@ -1,7 +1,7 @@
 import typer
-from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float
+from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float, get_pending, get_matches
 from .ledger import ledger_load, ledger_bean
-from .ofx import ofx_load, ofx_pending, ofx_matches
+from .ofx import ofx_load
 from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar, valid_math_float
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
@@ -154,8 +154,7 @@ def bean_import(
 
     # Match transactions not in beans into pending
     pending = []
-    if ofx:
-        pending = ofx_pending(filtered, ledger_data.transactions, account)
+    pending = get_pending(filtered, ledger_data.transactions, account)
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:
@@ -183,8 +182,7 @@ def bean_import(
         if resolve[0] == "r":
             console.print(f"...Reconciling")
             reconcile_matches = []
-            if ofx:
-                reconcile_matches = ofx_matches(txn, ledger_data.transactions, account)
+            reconcile_matches = get_matches(txn, ledger_data.transactions, account)
 
             # Matches found
             matches_canceled = False
