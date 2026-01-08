@@ -28,6 +28,21 @@ def period_callback(date_str: str):
 
     return date_str
 
+def date_callback(date_str: str):
+    if not date_str: return date_str
+    error = "Please enter a valid date (YYYY-MM-DD)"
+    if not all(c.isdigit() or c == '-' for c in date_str): raise typer.BadParameter(error)
+
+    parts = date_str.split('-')
+    num_parts = len(parts)
+
+    if not num_parts == 3: raise typer.BadParameter(error)
+    if not (parts[0].isdigit() and len(parts[0]) == 4): raise typer.BadParameter(error)
+    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise typer.BadParameter(error)
+    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise typer.BadParameter(error)
+
+    return date_str
+
 def account_callback(acct_str: str):
     if not acct_str: return acct_str
     if not is_account(acct_str): raise typer.BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
