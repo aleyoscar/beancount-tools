@@ -1,5 +1,5 @@
 import typer, os, base64, requests, json
-from .bean_import import console, err_console, date_callback
+from .bean_import import console, err_console, date_callback, version_callback
 from .prompts import confirm_toolbar, ValidOptions
 from .helpers import get_timestamp
 from typing_extensions import Annotated
@@ -57,6 +57,7 @@ def download(
     start_date: Annotated[str, typer.Option("--start-date", "-sd", help="Retreive transactions on or after this date in the format YYYY-MM-DD", callback=date_callback)]="",
     end_date: Annotated[str, typer.Option("--end-date", "-ed", help="Retreive transactions before (but not including) this date in the format YYYY-MM-DD", callback=date_callback)]="",
     pending: Annotated[bool, typer.Option("--pending", "-p", help="Include pending transactions")]=False,
+    version: Annotated[bool, typer.Option("--version", "-v", help="Show version info and exit", callback=version_callback, is_eager=True)]=False
 ):
     """
     Download transactions from an aggregator. Currently supported aggregators are: SimpleFIN

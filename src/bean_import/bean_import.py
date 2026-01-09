@@ -4,6 +4,7 @@ from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load
 from .simplefin import simplefin_load
 from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar, valid_math_float
+from . import __version__
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -75,6 +76,11 @@ def flag_callback(flag_str: str):
         raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
     return flag_str
 
+def version_callback(value: bool):
+    if value:
+        print(f"v{__version__}")
+        raise typer.Exit()
+
 def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
     if style and color:
         type = f"<{color}>{type}</{color}>"
@@ -115,7 +121,8 @@ def bean_import(
     account: Annotated[str, typer.Option("--account", "-a", help="Specify the account transactions belong to", callback=account_callback)]="",
     payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
     operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
-    flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*"
+    flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*",
+    version: Annotated[bool, typer.Option("--version", "-v", help="Show version info and exit", callback=version_callback, is_eager=True)]=False,
 ):
     """
     Parse transactions for review and editing for a beancount LEDGER and output transaction entries to stdout
