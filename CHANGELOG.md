@@ -1,4 +1,34 @@
 
+<a name="v1.0.0"></a>
+## [v1.0.0](https://github.com/aleyoscar/beancount-importer/compare/v0.1.1...v1.0.0) (2026-01-08)
+
+### Bug Fixes
+
+* **app:** Mismatched version info in __init__.py
+* **app:** Test for empty response. Fixes [#14](https://github.com/aleyoscar/beancount-importer/issues/14)
+* **app:** Move rec insertion. Fixes [#10](https://github.com/aleyoscar/beancount-importer/issues/10), closes [#11](https://github.com/aleyoscar/beancount-importer/issues/11) & closes [#13](https://github.com/aleyoscar/beancount-importer/issues/13)
+* **docs:** Incorrect gen-chglog command
+
+### Code Refactoring
+
+* **app:** Reorganize code
+* **app:** Moved Transactions class to helpers
+* **app:** Moved ofx_pending and ofx_matches to helpers
+
+### Features
+
+* **app:** Parse SimpleFIN json files
+* **app:** Added download and import commands
+* **app:** Changed ofx to an option to prepare for simplefin
+* **app:** Specify default flag for transactions. Closes [#12](https://github.com/aleyoscar/beancount-importer/issues/12)
+* **app:** Evaluate basic expressions for float prompts. Closes [#8](https://github.com/aleyoscar/beancount-importer/issues/8)
+* **app:** Color 'debit' and 'credit' text. Closes [#9](https://github.com/aleyoscar/beancount-importer/issues/9)
+* **app:** Payee autocompletion grabs from ledger as well. Closes [#7](https://github.com/aleyoscar/beancount-importer/issues/7)
+* **app:** Prompt for total. Closes [#4](https://github.com/aleyoscar/beancount-importer/issues/4) & closes [#5](https://github.com/aleyoscar/beancount-importer/issues/5)
+* **app:** Switched number and answer colors for consistency
+* **docs:** Added gen-chglog command for future use
+
+
 <a name="v0.1.1"></a>
 ## [v0.1.1](https://github.com/aleyoscar/beancount-importer/compare/v0.1.0...v0.1.1) (2025-08-27)
 
