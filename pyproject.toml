@@ -1,5 +1,5 @@
 [project]
-name = "bean-import"
+name = "bean-tools"
 version = "1.1.0"
 description = ""
 authors = [
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "bean_import", from = "src"}]
+packages = [{include = "bean_tools", from = "src"}]
 
 
 [build-system]
@@ -25,4 +25,4 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
-bean-import = "bean_import.cli:app"
+bean-tools = "bean_tools.cli:app"

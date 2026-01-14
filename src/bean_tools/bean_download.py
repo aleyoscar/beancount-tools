@@ -51,7 +51,7 @@ def get_access_url():
             console.print(f"Saved access url to [file].env[/]")
     return access_url
 
-def download(
+def bean_download(
     aggregator: Annotated[str, typer.Argument(help="Specify the aggregator to use", callback=aggregator_callback)]="simplefin",
     output: Annotated[Path, typer.Option("--output", "-o", help="The output file to use for the downloaded transactions", exists=False)]="data.json",
     start_date: Annotated[str, typer.Option("--start-date", "-sd", help="Retreive transactions on or after this date in the format YYYY-MM-DD", callback=date_callback)]="",

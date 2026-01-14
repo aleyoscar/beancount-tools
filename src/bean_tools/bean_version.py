@@ -1,6 +1,6 @@
 from . import __version__
 
-def version():
+def bean_version():
     """
     Show version info and exit
     """
