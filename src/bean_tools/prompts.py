@@ -2,6 +2,8 @@ from datetime import datetime
 from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.validation import Validator, ValidationError
+from typer import BadParameter, Exit
+from . import __version__
 import re
 
 class ValidOptions(Validator):
@@ -75,3 +77,64 @@ def confirm_toolbar():
 
 def edit_toolbar():
     return f"[D]ate  [F]lag  [P]ayee  [N]arration  [T]ags  [L]inks  P[O]stings  [S]ave  [c-x] Cancel"
+
+def month_callback(date_str: str):
+    if not date_str: return date_str
+    error = "Please enter a valid month (YYYY-MM)"
+    if not all(c.isdigit() or c == '-' for c in date_str): raise BadParameter(error)
+
+    parts = date_str.split('-')
+    num_parts = len(parts)
+
+    if num_parts != 2: raise BadParameter(error)
+    if not (parts[0].isdigit() and len(parts[0]) == 4): raise BadParameter(error)
+    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise BadParameter(error)
+
+    return date_str
+
+def version_callback(value: bool):
+    if value:
+        print(f"v{__version__}")
+        raise Exit()
+
+def date_callback(date_str: str):
+    if not date_str: return date_str
+    error = "Please enter a valid date (YYYY-MM-DD)"
+    if not all(c.isdigit() or c == '-' for c in date_str): raise BadParameter(error)
+
+    parts = date_str.split('-')
+    num_parts = len(parts)
+
+    if not num_parts == 3: raise BadParameter(error)
+    if not (parts[0].isdigit() and len(parts[0]) == 4): raise BadParameter(error)
+    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise BadParameter(error)
+    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise BadParameter(error)
+
+    return date_str
+
+def account_callback(acct_str: str):
+    if not acct_str: return acct_str
+    if not is_account(acct_str): raise BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
+    return acct_str
+
+def flag_callback(flag_str: str):
+    if flag_str != '*' and flag_str != '!':
+        raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
+    return flag_str
+
+def period_callback(date_str: str):
+    if not date_str: return date_str
+    error = "Please enter a valid date format (YYYY, YYYY-MM or YYYY-MM-DD)"
+    if not all(c.isdigit() or c == '-' for c in date_str): raise BadParameter(error)
+
+    parts = date_str.split('-')
+    num_parts = len(parts)
+
+    if num_parts not in (1, 2, 3): raise BadParameter(error)
+    if not (parts[0].isdigit() and len(parts[0]) == 4): raise BadParameter(error)
+    if num_parts == 1: return date_str
+    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise BadParameter(error)
+    if num_parts == 2: return date_str
+    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise BadParameter(error)
+
+    return date_str

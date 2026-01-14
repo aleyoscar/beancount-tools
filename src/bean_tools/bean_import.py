@@ -1,9 +1,38 @@
 import typer
-from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float, get_pending, get_matches
+from .helpers import (
+    get_key,
+    set_key,
+    get_json_values,
+    replace_lines,
+    cur,
+    append_lines,
+    dec,
+    eval_string_dec,
+    eval_string_float,
+    get_pending,
+    get_matches
+)
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load
 from .simplefin import simplefin_load
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar, valid_math_float
+from .prompts import (
+    resolve_toolbar,
+    cancel_bindings,
+    cancel_toolbar,
+    confirm_toolbar,
+    ValidOptions,
+    valid_account,
+    edit_toolbar,
+    valid_date,
+    valid_link_tag,
+    is_account,
+    postings_toolbar,
+    valid_math_float,
+    period_callback,
+    account_callback,
+    flag_callback,
+    version_callback
+)
 from . import __version__
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
@@ -33,53 +62,6 @@ style = Style.from_dict({
 
 console = Console(theme=theme)
 err_console = Console(theme=theme, stderr=True)
-
-def period_callback(date_str: str):
-    if not date_str: return date_str
-    error = "Please enter a valid date format for --period (YYYY, YYYY-MM or YYYY-MM-DD)"
-    if not all(c.isdigit() or c == '-' for c in date_str): raise typer.BadParameter(error)
-
-    parts = date_str.split('-')
-    num_parts = len(parts)
-
-    if num_parts not in (1, 2, 3): raise typer.BadParameter(error)
-    if not (parts[0].isdigit() and len(parts[0]) == 4): raise typer.BadParameter(error)
-    if num_parts == 1: return date_str
-    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise typer.BadParameter(error)
-    if num_parts == 2: return date_str
-    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise typer.BadParameter(error)
-
-    return date_str
-
-def date_callback(date_str: str):
-    if not date_str: return date_str
-    error = "Please enter a valid date (YYYY-MM-DD)"
-    if not all(c.isdigit() or c == '-' for c in date_str): raise typer.BadParameter(error)
-
-    parts = date_str.split('-')
-    num_parts = len(parts)
-
-    if not num_parts == 3: raise typer.BadParameter(error)
-    if not (parts[0].isdigit() and len(parts[0]) == 4): raise typer.BadParameter(error)
-    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise typer.BadParameter(error)
-    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise typer.BadParameter(error)
-
-    return date_str
-
-def account_callback(acct_str: str):
-    if not acct_str: return acct_str
-    if not is_account(acct_str): raise typer.BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
-    return acct_str
-
-def flag_callback(flag_str: str):
-    if flag_str != '*' and flag_str != '!':
-        raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
-    return flag_str
-
-def version_callback(value: bool):
-    if value:
-        print(f"v{__version__}")
-        raise typer.Exit()
 
 def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
     if style and color:
@@ -113,16 +95,44 @@ def get_posting(type, default_amount, default_currency, op_cur, completer, style
     return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
-    ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
-    ofx: Annotated[Path, typer.Option("--ofx", "-x", help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
-    simplefin: Annotated[Path, typer.Option("--simplefin", "-s", help="The simplefin file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
-    output: Annotated[Path, typer.Option("--output", "-o", help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
-    period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse transactions from in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
-    account: Annotated[str, typer.Option("--account", "-a", help="Specify the account transactions belong to", callback=account_callback)]="",
-    payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
-    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
-    flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*",
-    version: Annotated[bool, typer.Option("--version", "-v", help="Show version info and exit", callback=version_callback, is_eager=True)]=False,
+    ledger: Annotated[Path, typer.Argument(
+        help="The beancount ledger file to base the parser from",
+        exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
+    ofx: Annotated[Path, typer.Option(
+        "--ofx", "-x",
+        help="The ofx file to parse",
+        exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
+    simplefin: Annotated[Path, typer.Option(
+        "--simplefin", "-s",
+        help="The simplefin file to parse",
+        exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)]=None,
+    output: Annotated[Path, typer.Option(
+        "--output", "-o",
+        help="The output file to write to instead of stdout",
+        show_default=False, exists=False)]=None,
+    period: Annotated[str, typer.Option(
+        "--period", "-d",
+        help="Specify a year, month or day period to parse transactions from in the format YYYY, YYYY-MM or YYYY-MM-DD",
+        callback=period_callback)]="",
+    account: Annotated[str, typer.Option(
+        "--account", "-a",
+        help="Specify the account transactions belong to",
+        callback=account_callback)]="",
+    payees: Annotated[Path, typer.Option(
+        "--payees", "-p",
+        help="The payee file to use for name substitutions",
+        exists=False)]="payees.json",
+    operating_currency: Annotated[bool, typer.Option(
+        "--operating_currency", "-c",
+        help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
+    flag: Annotated[str, typer.Option(
+        "--flag", "-f",
+        help="Specify the default flag to set for transactions",
+        callback=flag_callback)]="*",
+    version: Annotated[bool, typer.Option(
+        "--version", "-v",
+        help="Show version info and exit",
+        callback=version_callback, is_eager=True)]=False,
 ):
     """
     Parse transactions for review and editing for a beancount LEDGER and output transaction entries to stdout
