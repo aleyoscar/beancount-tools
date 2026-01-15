@@ -40,8 +40,8 @@ def set_json(data, json_path):
     with open(json_path, 'w', encoding='utf-8', newline='\n') as file:
         json.dump(data, file, indent=4, sort_keys=True, ensure_ascii=False)
 
-def get_json(json_path):
-    data = {}
+def get_json(json_path, default={}):
+    data = default
     if not os.path.exists(json_path):
         set_json(data, json_path)
     with open(json_path, 'r', encoding='utf-8') as file:
