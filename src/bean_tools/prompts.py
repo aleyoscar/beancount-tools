@@ -47,11 +47,23 @@ def is_link_tag(text):
             return False
     return True
 
+def is_tag(text):
+    return re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_-]*', text)
+
+def is_day(text):
+    try:
+        if int(text) >= 1 and int(text) <= 31: return True
+        else: return False
+    except ValueError:
+        return False
+
 valid_float = Validator.from_callable(is_float, error_message="Not a valid number", move_cursor_to_end=True)
 valid_math_float = Validator.from_callable(is_math_float, error_message="Not a valid number or expression", move_cursor_to_end=True)
 valid_account = Validator.from_callable(is_account, error_message="Not a valid account", move_cursor_to_end=True)
 valid_date = Validator.from_callable(is_date, error_message="Not a valid date", move_cursor_to_end=True)
 valid_link_tag = Validator.from_callable(is_link_tag, error_message="Not a valid link or tag", move_cursor_to_end=True)
+valid_tag = Validator.from_callable(is_tag, error_message="Not a valid tag", move_cursor_to_end=True)
+valid_day = Validator.from_callable(is_day, error_message="Not a valid day of the month", move_cursor_to_end=True)
 
 cancel_bindings = KeyBindings()
 
@@ -77,6 +89,9 @@ def confirm_toolbar():
 
 def edit_toolbar():
     return f"[D]ate  [F]lag  [P]ayee  [N]arration  [T]ags  [L]inks  P[O]stings  [S]ave  [c-x] Cancel"
+
+def edit_bills_toolbar():
+    return f"[A]dd  [D]elete  [E]dit [S]ave  [c-x] Cancel"
 
 def month_callback(date_str: str):
     if not date_str: return date_str
