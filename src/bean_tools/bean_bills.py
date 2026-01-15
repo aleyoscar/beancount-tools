@@ -32,7 +32,7 @@ from typing_extensions import Annotated
 from datetime import date, datetime
 
 def print_bill(bill, spacing=20):
-    return f"[{int(bill['due']):02d}] {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
+    return f"({int(bill['due']):02d}) {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
 
 def bean_bills(
     ledger: Annotated[Path, typer.Argument(
