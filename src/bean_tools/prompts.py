@@ -2,9 +2,33 @@ from datetime import datetime
 from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit.styles import Style
+from rich.console import Console
+from rich.theme import Theme
 from typer import BadParameter, Exit
 from . import __version__
 import re
+
+theme = Theme({
+    "number": "cyan",
+    "date": "orange4",
+    "flag": "magenta",
+    "error": "red",
+    "file": "grey50",
+    "string": "green",
+    "warning": "yellow",
+    "answer": "blue",
+    "pos": "green",
+    "neg": "orange_red1"
+})
+
+style = Style.from_dict({
+    "pos": "#008700",
+    "neg": "#ff5f00"
+})
+
+console = Console(theme=theme)
+err_console = Console(theme=theme, stderr=True)
 
 class ValidOptions(Validator):
     def __init__(self, options):
