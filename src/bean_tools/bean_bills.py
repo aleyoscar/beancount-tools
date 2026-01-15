@@ -29,6 +29,9 @@ from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from typing_extensions import Annotated
 from datetime import date
 
+def print_bill(bill, spacing=20):
+    return f"[{int(bill['due']):02d}] {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
+
 def bean_bills(
     ledger: Annotated[Path, typer.Argument(
         help="The beancount ledger file to parse",
@@ -66,7 +69,7 @@ def bean_bills(
         edit_cancelled = False
         while True:
             for i, bill in enumerate(bills):
-                console.print(f"[{i}] {bills[i]['tag']} | {bills[i]['due']} | {cur(bills[i]['amount'])}")
+                console.print(print_bill(bill, spacing))
             index_prompt = "[0]" if len(bills) == 1 else f"[0-{len(bills)-1}]"
             valid_indexes = [str(n) for n in range(len(bills))]
             if not len(bills):
