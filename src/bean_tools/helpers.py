@@ -40,7 +40,7 @@ def set_json(data, json_path):
     with open(json_path, 'w', encoding='utf-8', newline='\n') as file:
         json.dump(data, file, indent=4, sort_keys=True, ensure_ascii=False)
 
-def get_json(json_path, default={}):
+def get_json(json_path, default={}, overwrite_invalid=True):
     data = default
     if not os.path.exists(json_path):
         set_json(data, json_path)
@@ -48,8 +48,10 @@ def get_json(json_path, default={}):
         try:
             data = json.load(file)
         except json.JSONDecodeError:
-            # If file is empty or invalid, initialize with empty dict
-            set_json(data, json_path)
+            if overwrite_invalid:
+                set_json(data, json_path)
+            else:
+                return None
     return data
 
 def get_json_values(json_path):

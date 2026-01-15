@@ -2,9 +2,9 @@ from beancount import loader
 from beancount.core.data import Transaction, Posting, Open
 from beancount.core.amount import Amount
 from beancount.parser import printer
-from datetime import datetime
 from .helpers import cur, dec, del_spaces, set_from_sets
 from decimal import Decimal
+import datetime
 
 class Ledger:
     def __init__(self, entries, errors, options):
@@ -97,3 +97,6 @@ def ledger_load(console, ledger_path):
 
 def ledger_bean(txn, account_id, flag):
     return Bean(Transaction({}, txn.date, flag, txn.payee, '', [], [], []))
+
+def new_bean(meta={}, date=datetime.date.today(), flag='*', payee='', narration='', tags=[], links=[], postings=[]):
+    return Bean(Transaction(meta, date, flag, payee, narration, tags, links, postings))
