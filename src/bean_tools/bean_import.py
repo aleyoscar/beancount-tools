@@ -123,7 +123,7 @@ def bean_import(
         help="The payee file to use for name substitutions",
         exists=False)]="payees.json",
     operating_currency: Annotated[bool, typer.Option(
-        "--operating_currency", "-c",
+        "--operating-currency", "-c",
         help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
     flag: Annotated[str, typer.Option(
         "--flag", "-f",
