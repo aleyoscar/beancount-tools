@@ -68,18 +68,6 @@ def bean_bills(
     Review and keep track of bill payments in a beancount ledger
     """
 
-    bills = get_json(config, default=[], overwrite_invalid=False)
-    if bills is None:
-        err_console.print("\n[error]Invalid config JSON[/]\n")
-        raise typer.Exit()
-    if not len(bills):
-        console.print("\n[warning]No bills in config file. Please add some bills[/]")
-        raise typer.Exit()
-
-    spacing = 0
-    for bill in bills:
-        spacing = max(spacing, len(bill['tag']))
-
     ledger_data = ledger_load(err_console, ledger)
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
     currency = ledger_data.currency if operating_currency else default_currency
@@ -90,187 +78,20 @@ def bean_bills(
     console.print(f"CURRENCY: [number]{currency}[/]")
     if output: console.print(f"OUTPUT: [file]{output}[/]")
 
-    # Edit config file
-    if edit:
-        console.print(f"\n[warning]Editing bills configuration[/]: [file]{config}[/]\n")
-        edit_cancelled = False
-        while True:
-            for i, bill in enumerate(bills):
-                console.print(print_bill(bill, spacing))
-            index_prompt = "[0]" if len(bills) == 1 else f"[0-{len(bills)-1}]"
-            valid_indexes = [str(n) for n in range(len(bills))]
-            if not len(bills):
-                console.print(f"\nNo bills in configuration\n")
-            edit_option = prompt(
-                f"\n...Enter an option > ",
-                validator=ValidOptions(['a', 'add', 'd', 'delete', 'e', 'edit', 's', 'save']),
-                bottom_toolbar=edit_bills_toolbar,
-                key_bindings=cancel_bindings)
-
-            if edit_option is None:
-                edit_cancelled = True
-                break
-            else:
-                edit_option = edit_option.lower()
-
-            # Add
-            if edit_option[0] == 'a':
-                console.print("\n[pos]Adding bill[/]\n")
-                edit_add_tag = prompt(
-                    f"...Bill tag > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_tag)
-                if edit_add_tag is None:
-                    continue
-                edit_add_account = prompt(
-                    f"...Bill main account > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_account,
-                    completer=account_completer)
-                if edit_add_account is None:
-                    continue
-                edit_add_liability = prompt(
-                    f"...Bill liability account > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_account,
-                    completer=account_completer)
-                if edit_add_liability is None:
-                    continue
-                edit_add_amount = prompt(
-                    f"...Bill amount > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_float)
-                if edit_add_amount is None:
-                    continue
-                edit_add_due = prompt(
-                    f"...Bill due day > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_day)
-                if edit_add_due is None:
-                    continue
-                edit_add_payee = prompt(
-                    f"...Bill payee > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar)
-                if edit_add_payee is None:
-                    continue
-                bills.append({
-                    "tag": edit_add_tag,
-                    "account": edit_add_account,
-                    "liability": edit_add_liability,
-                    "amount": edit_add_amount,
-                    "due": edit_add_due,
-                    "payee": edit_add_payee
-                })
-                bills.sort(key=lambda x: x['tag'])
-                bills.sort(key=lambda x: int(x['due']))
-                console.print(f"\n[pos]Added '{edit_add_tag}'[/]\n")
-                continue
-
-            # Delete
-            if edit_option[0] == 'd':
-                if not len(bills):
-                    console.print("\n[warning]No bills to delete[/]\n")
-                    continue
-                edit_delete = prompt(
-                    f"...Select bill to delete {index_prompt}> ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=ValidOptions(valid_indexes))
-                if edit_delete is None:
-                    continue
-                index = int(edit_delete)
-                console.print(f"\n[error]Deleting [{index}] {bills[index]['tag']}[/]\n")
-                bills.pop(int(edit_delete))
-                continue
-
-            # Edit
-            if edit_option[0] == 'e':
-                if not len(bills):
-                    console.print("\n[warning]No bills to edit[/]\n")
-                    continue
-                edit_edit = prompt(
-                    f"...Select bill to edit {index_prompt}> ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=ValidOptions(valid_indexes))
-                if edit_edit is None:
-                    continue
-                index = int(edit_edit)
-                console.print(f"\n[warning]Editing [{index}] {bills[index]['tag']}[/]\n")
-                edit_edit_tag = prompt(
-                    f"...Bill tag > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_tag,
-                    default=bills[index]['tag'])
-                if edit_edit_tag is None:
-                    continue
-                edit_edit_account = prompt(
-                    f"...Bill main account > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_account,
-                    completer=account_completer,
-                    default=bills[index]['account'])
-                if edit_edit_account is None:
-                    continue
-                edit_edit_liability = prompt(
-                    f"...Bill liability account > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_account,
-                    completer=account_completer,
-                    default=bills[index]['liability'])
-                if edit_edit_liability is None:
-                    continue
-                edit_edit_amount = prompt(
-                    f"...Bill amount > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_float,
-                    default=bills[index]['amount'])
-                if edit_edit_amount is None:
-                    continue
-                edit_edit_due = prompt(
-                    f"...Bill due day > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_day,
-                    default=bills[index]['due'])
-                if edit_edit_due is None:
-                    continue
-                edit_edit_payee = prompt(
-                    f"...Bill payee > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    default=bills[index]['payee'])
-                if edit_edit_payee is None:
-                    continue
-                bills[index] = {
-                    "tag": edit_edit_tag,
-                    "account": edit_edit_account,
-                    "liability": edit_edit_liability,
-                    "amount": edit_edit_amount,
-                    "due": edit_edit_due,
-                    "payee": edit_edit_payee
-                }
-                bills.sort(key=lambda x: x['tag'])
-                bills.sort(key=lambda x: int(x['due']))
-                console.print(f"\n[pos]Edited '{edit_edit_tag}'[/]\n")
-                continue
-
-            # Save
-            if edit_option[0] == 's' or edit_option == '':
-                set_json(bills, config)
-                console.print("\n[number]Saved configuration[/]")
-                break
+    bills = get_json(config, default=[], overwrite_invalid=False)
+    if bills is None:
+        err_console.print("\n[error]Invalid config JSON[/]\n")
         raise typer.Exit()
+    if edit:
+        edit_bills(config, bills, account_completer)
+        raise typer.Exit()
+    if not len(bills):
+        console.print("\n[warning]No bills in config file. Please add some bills[/]")
+        raise typer.Exit()
+
+    spacing = 0
+    for bill in bills:
+        spacing = max(spacing, len(bill['tag']))
 
     # Check for unpaid, pending and missing bills
     unpaid = [] # Bills yet unpaid
@@ -352,3 +173,184 @@ def bean_bills(
         console.print(f"\n[pos]No pending bills found for [date]{month}[/]![/]")
 
     raise typer.Exit()
+
+def edit_bills(config, bills, account_completer):
+    # Edit config file
+    console.print(f"\n[warning]Editing bills configuration[/]: [file]{config}[/]\n")
+    edit_cancelled = False
+    while True:
+        for i, bill in enumerate(bills):
+            console.print(f"[{i}] {print_bill(bill)}")
+        index_prompt = "[0]" if len(bills) == 1 else f"[0-{len(bills)-1}]"
+        valid_indexes = [str(n) for n in range(len(bills))]
+        if not len(bills):
+            console.print(f"\nNo bills in configuration\n")
+        edit_option = prompt(
+            f"\n...Enter an option > ",
+            validator=ValidOptions(['a', 'add', 'd', 'delete', 'e', 'edit', 's', 'save']),
+            bottom_toolbar=edit_bills_toolbar,
+            key_bindings=cancel_bindings)
+
+        if edit_option is None:
+            edit_cancelled = True
+            break
+        else:
+            edit_option = edit_option.lower()
+
+        # Add
+        if edit_option[0] == 'a':
+            console.print("\n[pos]Adding bill[/]\n")
+            edit_add_tag = prompt(
+                f"...Bill tag > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_tag)
+            if edit_add_tag is None:
+                continue
+            edit_add_account = prompt(
+                f"...Bill main account > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_account,
+                completer=account_completer)
+            if edit_add_account is None:
+                continue
+            edit_add_liability = prompt(
+                f"...Bill liability account > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_account,
+                completer=account_completer)
+            if edit_add_liability is None:
+                continue
+            edit_add_amount = prompt(
+                f"...Bill amount > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_float)
+            if edit_add_amount is None:
+                continue
+            edit_add_due = prompt(
+                f"...Bill due day > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_day)
+            if edit_add_due is None:
+                continue
+            edit_add_payee = prompt(
+                f"...Bill payee > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar)
+            if edit_add_payee is None:
+                continue
+            bills.append({
+                "tag": edit_add_tag,
+                "account": edit_add_account,
+                "liability": edit_add_liability,
+                "amount": edit_add_amount,
+                "due": edit_add_due,
+                "payee": edit_add_payee
+            })
+            bills.sort(key=lambda x: x['tag'])
+            bills.sort(key=lambda x: int(x['due']))
+            console.print(f"\n[pos]Added '{edit_add_tag}'[/]\n")
+            continue
+
+        # Delete
+        if edit_option[0] == 'd':
+            if not len(bills):
+                console.print("\n[warning]No bills to delete[/]\n")
+                continue
+            edit_delete = prompt(
+                f"...Select bill to delete {index_prompt}> ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=ValidOptions(valid_indexes))
+            if edit_delete is None:
+                continue
+            index = int(edit_delete)
+            console.print(f"\n[error]Deleting [{index}] {bills[index]['tag']}[/]\n")
+            bills.pop(int(edit_delete))
+            continue
+
+        # Edit
+        if edit_option[0] == 'e':
+            if not len(bills):
+                console.print("\n[warning]No bills to edit[/]\n")
+                continue
+            edit_edit = prompt(
+                f"...Select bill to edit {index_prompt}> ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=ValidOptions(valid_indexes))
+            if edit_edit is None:
+                continue
+            index = int(edit_edit)
+            console.print(f"\n[warning]Editing [{index}] {bills[index]['tag']}[/]\n")
+            edit_edit_tag = prompt(
+                f"...Bill tag > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_tag,
+                default=bills[index]['tag'])
+            if edit_edit_tag is None:
+                continue
+            edit_edit_account = prompt(
+                f"...Bill main account > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_account,
+                completer=account_completer,
+                default=bills[index]['account'])
+            if edit_edit_account is None:
+                continue
+            edit_edit_liability = prompt(
+                f"...Bill liability account > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_account,
+                completer=account_completer,
+                default=bills[index]['liability'])
+            if edit_edit_liability is None:
+                continue
+            edit_edit_amount = prompt(
+                f"...Bill amount > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_float,
+                default=bills[index]['amount'])
+            if edit_edit_amount is None:
+                continue
+            edit_edit_due = prompt(
+                f"...Bill due day > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_day,
+                default=bills[index]['due'])
+            if edit_edit_due is None:
+                continue
+            edit_edit_payee = prompt(
+                f"...Bill payee > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                default=bills[index]['payee'])
+            if edit_edit_payee is None:
+                continue
+            bills[index] = {
+                "tag": edit_edit_tag,
+                "account": edit_edit_account,
+                "liability": edit_edit_liability,
+                "amount": edit_edit_amount,
+                "due": edit_edit_due,
+                "payee": edit_edit_payee
+            }
+            bills.sort(key=lambda x: x['tag'])
+            bills.sort(key=lambda x: int(x['due']))
+            console.print(f"\n[pos]Edited '{edit_edit_tag}'[/]\n")
+            continue
+
+        # Save
+        if edit_option[0] == 's' or edit_option == '':
+            set_json(bills, config)
+            console.print("\n[number]Saved configuration[/]")
+            break
