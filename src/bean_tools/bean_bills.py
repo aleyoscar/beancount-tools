@@ -33,12 +33,21 @@ from datetime import date, datetime
 
 def print_bill(bill, spacing=20):
     status = ''
+    amt_style = 'number'
     if 'status' in bill:
-        if bill['status'] == 'missing': status = f"[file]Missing[/]"
-        elif bill['status'] == 'unpaid': status = f"[error]Unpaid[/]"
-        elif bill['status'] == 'pending': status = f"[warning]Pending[/]"
-        elif bill['status'] == 'paid': status = f"[pos]Paid[/]"
-    bill_str = f"({int(bill['due']):02d}) {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
+        if bill['status'] == 'missing':
+            status = f"[file]Missing[/]"
+            amt_style = 'file'
+        elif bill['status'] == 'unpaid':
+            status = f"[error]Unpaid[/]"
+            amt_style = 'file'
+        elif bill['status'] == 'pending':
+            status = f"[warning]Pending[/]"
+            amt_style = 'warning'
+        elif bill['status'] == 'paid':
+            status = f"[pos]Paid[/]"
+            amt_style = 'pos'
+    bill_str = f"({int(bill['due']):02d}) {bill['tag']}{' '*(spacing - len(bill['tag']))} | [{amt_style}]{cur(bill['amount'])}[/]"
     if status: bill_str = f"{bill_str}{' '*(10 - len(cur(bill['amount'])))} | {status}"
     return bill_str
 
@@ -114,9 +123,15 @@ def bean_bills(
         bill_txn = next((txn for txn in linked if 'bill' in txn.entry.tags), None)
         payment_txn = next((txn for txn in linked if 'payment' in txn.entry.tags), None)
         if bill_txn is None: bills[i]['status'] = 'missing'
-        elif bill_txn.entry.flag == '!': bills[i]['status'] = 'unpaid'
-        elif payment_txn is None: bills[i]['status'] = 'pending'
-        else: bills[i]['status'] = 'paid'
+        elif bill_txn.entry.flag == '!':
+            bills[i]['status'] = 'unpaid'
+            bills[i]['amount'] = cur(bill_txn.amount)
+        elif payment_txn is None:
+            bills[i]['status'] = 'pending'
+            bills[i]['amount'] = cur(bill_txn.amount)
+        else:
+            bills[i]['status'] = 'paid'
+            bills[i]['amount'] = cur(payment_txn.amount)
         console.print(print_bill(bills[i], spacing))
 
     # Add missing bills
