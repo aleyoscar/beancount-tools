@@ -3,9 +3,11 @@ from .helpers import (
     #get_key, set_key,
     get_json,
     set_json,
+    dec,
     cur,
-    append_lines
-) #replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float, get_pending, get_matches
+    append_lines,
+    insert_lines
+) #eval_string_dec, eval_string_float, get_pending, get_matches
 from .ledger import ledger_load, ledger_bean, new_bean
 # from .ofx import ofx_load
 # from .simplefin import simplefin_load
@@ -29,7 +31,7 @@ from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from typing_extensions import Annotated
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 def print_bill(bill, spacing=20):
     status = ''
@@ -122,6 +124,8 @@ def bean_bills(
                 linked.append(txn)
         bill_txn = next((txn for txn in linked if 'bill' in txn.entry.tags), None)
         payment_txn = next((txn for txn in linked if 'payment' in txn.entry.tags), None)
+        bills[i]['bill_txn'] = bill_txn
+        bills[i]['payment_txn'] = payment_txn
         if bill_txn is None: bills[i]['status'] = 'missing'
         elif bill_txn.entry.flag == '!':
             bills[i]['status'] = 'unpaid'
@@ -136,6 +140,7 @@ def bean_bills(
 
     # Add missing bills
     missing = [b for b in bills if b['status'] == 'missing']
+    buffer = []
     if len(missing):
         missing_prompt = prompt(
             f"\n...Would you like to insert missing bills? [Y/n] > ",
@@ -173,6 +178,47 @@ def bean_bills(
                     append_lines(err_console, output, new_bill.print())
 
             console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
+            for bill in buffer:
+                console.print(bill)
+
+    # Pay unpaid bills
+    unpaid = [b for b in bills if b['status'] == 'unpaid']
+    buffer = []
+    if len(unpaid):
+        unpaid_prompt = prompt(
+            f"\n...Would you like to pay your unpaid bills? [Y/n] > ",
+            default='y',
+            bottom_toolbar=confirm_toolbar,
+            validator=ValidOptions(['y', 'n'])).lower()
+        if unpaid_prompt == 'y':
+            for bill in unpaid:
+                pay_prompt = prompt(
+                    f"\n...Pay for '{bill['tag']}'? [Y/n] > ",
+                    default='y',
+                    bottom_toolbar=confirm_toolbar,
+                    validator=ValidOptions(['y', 'n'])).lower()
+                if pay_prompt == 'n':
+                    continue
+                new_bill_txn = bill['bill_txn']
+                new_bill_amount = prompt(
+                    f"...Payment amount? > ",
+                    key_bindings=cancel_bindings,
+                    bottom_toolbar=cancel_toolbar,
+                    validator=valid_float,
+                    default=cur(new_bill_txn.amount))
+                if new_bill_amount is None:
+                    continue
+                new_bill_txn.update(flag='*')
+                if not new_bill_txn.replace():
+                    continue
+                if dec(bill['amount']) != dec(new_bill_amount):
+                    pad = f"\n; {new_bill_txn.entry.date} pad {bill['liability']} {bill['account']}\n"
+                    pad += f"; {new_bill_txn.entry.date + timedelta(days=1)} balance {bill['liability']} 0.00 {currency}"
+                    insert_lines(new_bill_txn.entry.meta['filename'], pad, new_bill_txn.entry.meta['lineno']+3)
+                console.print(f"\n{new_bill_txn}")
+                buffer.append(new_bill_txn.print_head())
+
+            console.print(f"[pos]Bills updated {'-'*64}[/]\n")
             for bill in buffer:
                 console.print(bill)
 

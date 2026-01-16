@@ -1,6 +1,7 @@
 import json, os, re
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
+from .prompts import console, err_console
 
 class Transaction:
     def __init__(self, id="", date=datetime.today(), payee="", amount=0.0):
@@ -77,6 +78,18 @@ def append_lines(console, file_path, new_data):
         return True
     except Exception as e:
         console.print(f"[error]<<ERROR>> Error inserting lines: {str(e)}[/]")
+
+def insert_lines(file_path, new_data, line_start):
+    new_data_arr = [l + '\n' for l in new_data.split('\n')]
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        new_lines = lines[:line_start-1] + new_data_arr + lines[line_start-1:]
+        with open(file_path, 'w', encoding='utf-8', newline='\n') as file:
+            file.writelines(new_lines)
+        return True
+    except Exception as e:
+        err_console.print(f"[error]<<Error>> Error inserting lines: {str(e)}[/]")
         return False
 
 def del_spaces(text):

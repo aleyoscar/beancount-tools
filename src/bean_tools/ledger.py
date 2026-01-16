@@ -4,6 +4,8 @@ from beancount.core.amount import Amount
 from beancount.parser import printer
 from .helpers import cur, dec, del_spaces, set_from_sets
 from decimal import Decimal
+from pathlib import Path
+from .prompts import console, err_console
 import datetime
 
 class Ledger:
@@ -83,6 +85,21 @@ class Bean:
         if postings is None: postings = self.entry.postings
         self.entry = Transaction(meta, date, flag, payee, narration, tags, links, postings)
         self.total()
+
+    def replace(self):
+        if not 'filename' in self.entry.meta or not 'lineno' in self.entry.meta:
+            return False
+        try:
+            with open(Path(self.entry.meta['filename']), 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+            txn_end = [l.strip() for l in lines].index('', self.entry.meta['lineno'] + 1)
+            new_lines = lines[:self.entry.meta['lineno']-1] + [line + '\n' for line in self.print().strip().split('\n')] + lines[txn_end:]
+            with open(self.entry.meta['filename'], 'w', encoding='utf-8', newline='\n') as file:
+                file.writelines(new_lines)
+            return True
+        except Exception as e:
+            err_console.print(f"[error]<<ERROR>> Error replacing transaction: {str(e)}[/]")
+            return False
 
 def ledger_load(console, ledger_path):
     try:
