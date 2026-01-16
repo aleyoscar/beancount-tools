@@ -42,15 +42,15 @@ from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from typing_extensions import Annotated
 
-def get_posting(type, default_amount, default_currency, op_cur, completer, color):
-    if color:
-        type = f"<{color}>{type}</{color}>"
+def get_posting(type, default_amount, default_currency, op_cur, completer, color, default_account=''):
+    type = f"<{color}>{type}</{color}>"
     account = prompt(
         HTML(f"...{type} account > "),
         bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
         validator=valid_account,
         completer=completer,
+        default=default_account,
         style=style)
     if not account: return None
     amount = prompt(
@@ -298,7 +298,7 @@ def bean_import(
             # Add debit posting
             if new_posting is not None:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg")
+                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg", default_account=account)
                 if new_posting is not None:
                     new_posting['amount'] = eval_string_dec(new_posting['amount'])
                     new_bean.add_posting(new_posting)
@@ -406,7 +406,7 @@ def bean_import(
                             new_posting['amount'] = eval_string_dec(new_posting['amount'])
                             new_bean.add_posting(new_posting)
                     console.print(f"\n{new_bean.print()}")
-                    new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg")
+                    new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg", default_account=account)
                     if new_posting is not None:
                         new_posting['amount'] = eval_string_dec(new_posting['amount'])
                         new_bean.add_posting(new_posting)
