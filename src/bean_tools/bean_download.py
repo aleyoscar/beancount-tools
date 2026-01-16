@@ -53,8 +53,8 @@ def get_access_url():
 def bean_download(
     aggregator: Annotated[str, typer.Argument(help="Specify the aggregator to use", callback=aggregator_callback)]="simplefin",
     output: Annotated[Path, typer.Option("--output", "-o", help="The output file to use for the downloaded transactions", exists=False)]="data.json",
-    start_date: Annotated[str, typer.Option("--start-date", "-sd", help="Retreive transactions on or after this date in the format YYYY-MM-DD", callback=date_callback)]="",
-    end_date: Annotated[str, typer.Option("--end-date", "-ed", help="Retreive transactions before (but not including) this date in the format YYYY-MM-DD", callback=date_callback)]="",
+    start_date: Annotated[str, typer.Option("--start-date", "-s", help="Retreive transactions on or after this date in the format YYYY-MM-DD", callback=date_callback)]="",
+    end_date: Annotated[str, typer.Option("--end-date", "-e", help="Retreive transactions before (but not including) this date in the format YYYY-MM-DD", callback=date_callback)]="",
     pending: Annotated[bool, typer.Option("--pending", "-p", help="Include pending transactions")]=False,
     version: Annotated[bool, typer.Option("--version", "-v", help="Show version info and exit", callback=version_callback, is_eager=True)]=False
 ):
