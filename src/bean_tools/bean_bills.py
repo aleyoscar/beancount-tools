@@ -32,7 +32,15 @@ from typing_extensions import Annotated
 from datetime import date, datetime
 
 def print_bill(bill, spacing=20):
-    return f"({int(bill['due']):02d}) {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
+    status = ''
+    if 'status' in bill:
+        if bill['status'] == 'missing': status = f"[file]Missing[/]"
+        elif bill['status'] == 'unpaid': status = f"[error]Unpaid[/]"
+        elif bill['status'] == 'pending': status = f"[warning]Pending[/]"
+        elif bill['status'] == 'paid': status = f"[pos]Paid[/]"
+    bill_str = f"({int(bill['due']):02d}) {bill['tag']}{' '*(spacing - len(bill['tag']))} | {cur(bill['amount'])}"
+    if status: bill_str = f"{bill_str}{' '*(10 - len(cur(bill['amount'])))} | {status}"
+    return bill_str
 
 def bean_bills(
     ledger: Annotated[Path, typer.Argument(
@@ -95,29 +103,25 @@ def bean_bills(
         spacing = max(spacing, len(bill['tag']))
 
     # Check for unpaid, pending and missing bills
-    unpaid = [] # Bills yet unpaid
-    pending = [] # Bills paid but not yet reconciled
-    missing = [] # Bills not present in ledger
     buffer = []
     console.print(f"\n[warning]Checking bills:[/]\n")
 
     for i, bill in enumerate(bills):
-        console.print(print_bill(bill, spacing))
         linked = []
         for txn in ledger_data.transactions:
             if f"{bill['tag']}-{month}" in txn.entry.links:
                 linked.append(txn)
         bill_txn = next((txn for txn in linked if 'bill' in txn.entry.tags), None)
         payment_txn = next((txn for txn in linked if 'payment' in txn.entry.tags), None)
-        if bill_txn is None: missing.append(bill)
-        elif bill_txn.entry.flag == '!': unpaid.append(bill)
-        elif payment_txn is None: pending.append(bill)
+        if bill_txn is None: bills[i]['status'] = 'missing'
+        elif bill_txn.entry.flag == '!': bills[i]['status'] = 'unpaid'
+        elif payment_txn is None: bills[i]['status'] = 'pending'
+        else: bills[i]['status'] = 'paid'
+        console.print(print_bill(bills[i], spacing))
 
     # Add missing bills
+    missing = [b for b in bills if b['status'] == 'missing']
     if len(missing):
-        console.print(f"\n[warning]Bills not found for [date]{month}[/][/]:\n")
-        for bill in missing:
-            console.print(print_bill(bill, spacing))
         missing_prompt = prompt(
             f"\n...Would you like to insert missing bills? [Y/n] > ",
             default='y',
@@ -156,22 +160,6 @@ def bean_bills(
             console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
             for bill in buffer:
                 console.print(bill)
-
-    # Show unpaid bills
-    if len(unpaid):
-        console.print("\n[warning]Unpaid bills:[/]\n")
-        for bill in unpaid:
-            console.print(print_bill(bill, spacing))
-    else:
-        console.print(f"\n[pos]No unpaid bills found for [date]{month}[/]![/]")
-
-    # Show pending bills
-    if len(pending):
-        console.print("\n[warning]Pending bills:[/]\n")
-        for bill in pending:
-            console.print(print_bill(bill, spacing))
-    else:
-        console.print(f"\n[pos]No pending bills found for [date]{month}[/]![/]")
 
     raise typer.Exit()
 
