@@ -1,6 +1,5 @@
 import typer, os, base64, requests, json
-from .bean_import import console, err_console
-from .prompts import confirm_toolbar, ValidOptions, date_callback, version_callback
+from .prompts import confirm_toolbar, ValidOptions, date_callback, version_callback, console, err_console
 from .helpers import get_timestamp
 from typing_extensions import Annotated
 from pathlib import Path
@@ -73,7 +72,7 @@ def bean_download(
                 access_url = get_access_url()
             else: access_url = env_vars['ACCESS_URL']
             if not access_url:
-                err_console.print(f"[warning]Could not get a valid access url. Exiting[/]")
+                err_console.print(f"[error]Could not get a valid access url. Exiting[/]")
                 raise typer.Exit()
             scheme, rest = access_url.split('//', 1)
             auth, rest = rest.split('@', 1)

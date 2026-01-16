@@ -5,7 +5,7 @@ from beancount.parser import printer
 from .helpers import cur, dec, del_spaces, set_from_sets
 from decimal import Decimal
 from pathlib import Path
-from .prompts import console, err_console
+from .prompts import err_console
 import datetime
 
 class Ledger:
@@ -101,15 +101,15 @@ class Bean:
             err_console.print(f"[error]<<ERROR>> Error replacing transaction: {str(e)}[/]")
             return False
 
-def ledger_load(console, ledger_path):
+def ledger_load(ledger_path):
     try:
         entries, errors, options = loader.load_file(ledger_path)
         return Ledger(entries, errors, options)
     except FileNotFoundError:
-        console.print(f"[error]Error: File {ledger_path} not found[/]")
+        err_console.print(f"[error]Error: File {ledger_path} not found[/]")
         return None
     except Exception as e:
-        console.print(f"[error]Error parsing Beancount file: {str(e)}[/]")
+        err_console.print(f"[error]Error parsing Beancount file: {str(e)}[/]")
         return None
 
 def ledger_bean(txn, account_id, flag):

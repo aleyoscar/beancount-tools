@@ -16,6 +16,8 @@ from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load
 from .simplefin import simplefin_load
 from .prompts import (
+    console,
+    err_console,
     resolve_toolbar,
     cancel_bindings,
     cancel_toolbar,
@@ -37,31 +39,7 @@ from . import __version__
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
-from prompt_toolkit.styles import Style
-from rich.console import Console
-from rich.theme import Theme
 from typing_extensions import Annotated
-
-theme = Theme({
-    "number": "cyan",
-    "date": "orange4",
-    "flag": "magenta",
-    "error": "red",
-    "file": "grey50",
-    "string": "green",
-    "warning": "yellow",
-    "answer": "blue",
-    "pos": "green",
-    "neg": "orange_red1"
-})
-
-style = Style.from_dict({
-    "pos": "#008700",
-    "neg": "#ff5f00"
-})
-
-console = Console(theme=theme)
-err_console = Console(theme=theme, stderr=True)
 
 def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
     if style and color:
@@ -150,23 +128,23 @@ def bean_import(
 
     # Parse file into txn_data
     if ofx:
-        txn_data = ofx_load(err_console, ofx)
+        txn_data = ofx_load(ofx)
     if simplefin:
-        txn_data = simplefin_load(console, simplefin)
+        txn_data = simplefin_load(simplefin)
 
     if txn_data and len(txn_data.transactions):
         console.print(f"Parsed [number]{len(txn_data.transactions)}[/] transactions")
     else:
-        err_console.print(f"[warning]No transactions found. Please provide a valid file to parse.[/]")
+        err_console.print(f"[error]No transactions found. Please provide a valid file to parse.[/]")
         raise typer.Exit()
 
     # Parse ledger file into ledger_data
-    ledger_data = ledger_load(err_console, ledger)
+    ledger_data = ledger_load(ledger)
     if ledger_data and len(ledger_data.transactions):
         console.print(f"Parsed [number]{len(ledger_data.transactions)}[/] beans from LEDGER file")
         console.print(f"Default currency: [answer]{ledger_data.currency}[/]")
     else:
-        err_console.print(f"[warning]No transaction entries found in LEDGER file. Exiting.[/]")
+        err_console.print(f"[error]No transaction entries found in LEDGER file. Exiting.[/]")
         raise typer.Exit()
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
     tags_completer = FuzzyCompleter(WordCompleter(ledger_data.tags))
@@ -178,7 +156,7 @@ def bean_import(
         if len(filtered):
             console.print(f"Found [number]{len(filtered)}[/] transactions within period [date]{period}[/]")
         else:
-            err_console.print(f"[warning]No transactions found within the specified period [date]{period}[/]. Exiting.[/]")
+            err_console.print(f"[error]No transactions found within the specified period [date]{period}[/]. Exiting.[/]")
             raise typer.Exit()
     else:
         filtered = txn_data.transactions
@@ -197,7 +175,7 @@ def bean_import(
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:
-        err_console.print(f"[warning]No pending transactions found. Exiting.[/]")
+        console.print(f"[warning]No pending transactions found. Exiting.[/]")
 
     # Parse each pending transaction
     reconcile_count = 0
@@ -206,7 +184,7 @@ def bean_import(
         console.print(f"Parsing {txn_count+1}/{len(pending)}: {txn.print(theme=True)}")
 
         # Update ledger data for every transaction
-        ledger_data = ledger_load(err_console, ledger)
+        ledger_data = ledger_load(ledger)
         account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
         tags_completer = FuzzyCompleter(WordCompleter(ledger_data.tags))
         links_completer = FuzzyCompleter(WordCompleter(ledger_data.links))
@@ -253,12 +231,7 @@ def bean_import(
                         if post.account == account:
                             post.meta.update({'rec': txn.id})
                             break
-                    replace_lines(
-                        err_console,
-                        bean_reconcile.entry.meta['filename'],
-                        bean_reconcile.print().strip(),
-                        bean_reconcile.entry.meta['lineno'],
-                        bean_linecount)
+                    bean_reconcile.replace()
                     console.print(bean_reconcile.print())
                     reconcile_count += 1
                 else: matches_canceled = True
@@ -306,7 +279,7 @@ def bean_import(
                 default=cur(new_amount)
             )
             if new_amount:
-                new_amount = eval_string_float(console, new_amount)
+                new_amount = eval_string_float(new_amount)
 
             # Add credit postings until total is equal to transaction amount
             new_bean = ledger_bean(txn, txn_data.account_id, flag)
@@ -315,7 +288,7 @@ def bean_import(
                 console.print(f"\n{new_bean.print()}")
                 new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
                 if new_posting is not None:
-                    new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                    new_posting['amount'] = eval_string_dec(new_posting['amount'])
                     new_bean.add_posting(new_posting)
                 else:
                     break
@@ -325,7 +298,7 @@ def bean_import(
                 console.print(f"\n{new_bean.print()}")
                 new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
                 if new_posting is not None:
-                    new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                    new_posting['amount'] = eval_string_dec(new_posting['amount'])
                     new_bean.add_posting(new_posting)
 
             # Edit final
@@ -423,17 +396,17 @@ def bean_import(
                         default=cur(new_amount)
                     )
                     if new_amount:
-                        new_amount = eval_string_float(console, new_amount)
+                        new_amount = eval_string_float(new_amount)
                     while new_bean.amount < new_amount:
                         console.print(f"\n{new_bean.print()}")
                         new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
                         if new_posting is not None:
-                            new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                            new_posting['amount'] = eval_string_dec(new_posting['amount'])
                             new_bean.add_posting(new_posting)
                     console.print(f"\n{new_bean.print()}")
                     new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
                     if new_posting is not None:
-                        new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                        new_posting['amount'] = eval_string_dec(new_posting['amount'])
                         new_bean.add_posting(new_posting)
                     continue
 
@@ -468,7 +441,7 @@ def bean_import(
                 if found_account:
                     if output:
                         console_insert = f'[file]{output}[/]'
-                        append_lines(err_console, output, new_bean.print())
+                        append_lines(output, new_bean.print())
                     else:
                         console_insert = f'[file]buffer[/]'
                         buffer += f"\n{new_bean.print()}"

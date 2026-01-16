@@ -87,7 +87,7 @@ def bean_bills(
     Review and keep track of bill payments in a beancount ledger
     """
 
-    ledger_data = ledger_load(err_console, ledger)
+    ledger_data = ledger_load(ledger)
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
     payees_completer = FuzzyCompleter(WordCompleter(ledger_data.payees, sentence=True))
     currency = ledger_data.currency if operating_currency else default_currency
@@ -175,7 +175,7 @@ def bean_bills(
                 console.print(f"\n{new_bill}")
                 buffer.append(new_bill)
                 if output:
-                    append_lines(err_console, output, new_bill.print())
+                    append_lines(output, new_bill.print())
 
             console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
             for bill in buffer:

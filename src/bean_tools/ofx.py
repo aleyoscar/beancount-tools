@@ -2,6 +2,7 @@ from .helpers import cur, dec, Transaction
 from ofxparse import OfxParser
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
+from .prompts import err_console
 
 class Account:
     def __init__(self, data):
@@ -10,7 +11,7 @@ class Account:
         self.institution = data.account.institution.organization if data.account.institution else 'Unknown'
         self.transactions = [Transaction(id=t.id, date=t.date, payee=t.payee, amount=t.amount) for t in data.account.statement.transactions]
 
-def ofx_load(console, ofx_path):
+def ofx_load(ofx_path):
     try:
         # Open and parse the OFX file
         with open(ofx_path, 'r') as file:
@@ -19,8 +20,8 @@ def ofx_load(console, ofx_path):
         return Account(ofx)
 
     except FileNotFoundError:
-        console.print(f"[error]Error: File {ofx_path} not found.[/]")
+        err_console.print(f"[error]Error: File {ofx_path} not found.[/]")
         return None
     except Exception as e:
-        console.print(f"[error]Error parsing OFX file: {str(e)}[/]")
+        err_console.print(f"[error]Error parsing OFX file: {str(e)}[/]")
         return None

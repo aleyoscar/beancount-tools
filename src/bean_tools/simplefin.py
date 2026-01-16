@@ -1,6 +1,6 @@
 import requests, os, sys, base64, binascii, datetime, json, typer
 from .helpers import Transaction, get_json
-from .prompts import cancel_toolbar, cancel_bindings, ValidOptions
+from .prompts import cancel_toolbar, cancel_bindings, ValidOptions, console
 from dotenv import dotenv_values
 from prompt_toolkit import prompt, HTML
 from datetime import datetime
@@ -17,7 +17,7 @@ class Account:
             amount=t['amount']
         ) for t in data['transactions']]
 
-def simplefin_load(console, simplefin_path):
+def simplefin_load(simplefin_path):
     data = get_json(simplefin_path)
     if 'accounts' in data and len(data['accounts']):
         console.print(f"...SimpleFIN accounts available:")

@@ -1,7 +1,7 @@
 import json, os, re
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
-from .prompts import console, err_console
+from .prompts import err_console
 
 class Transaction:
     def __init__(self, id="", date=datetime.today(), payee="", amount=0.0):
@@ -58,7 +58,7 @@ def get_json(json_path, default={}, overwrite_invalid=True):
 def get_json_values(json_path):
     return list(get_json(json_path).values())
 
-def replace_lines(console, file_path, new_data, line_start, line_count=1):
+def replace_lines(file_path, new_data, line_start, line_count=1):
     new_data_arr = [l + '\n' for l in new_data.split('\n')]
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -68,16 +68,16 @@ def replace_lines(console, file_path, new_data, line_start, line_count=1):
             file.writelines(new_lines)
         return True
     except Exception as e:
-        console.print(f"[error]<<ERROR>> Error replacing lines: {str(e)}[/]")
+        err_console.print(f"[error]<<ERROR>> Error replacing lines: {str(e)}[/]")
         return False
 
-def append_lines(console, file_path, new_data):
+def append_lines(file_path, new_data):
     try:
         with open(file_path, 'a', encoding='utf-8', newline='\n') as file:
             file.write(f"\n{new_data}")
         return True
     except Exception as e:
-        console.print(f"[error]<<ERROR>> Error appending lines: {str(e)}[/]")
+        err_console.print(f"[error]<<ERROR>> Error appending lines: {str(e)}[/]")
         return False
 
 def insert_lines(file_path, new_data, line_start):
@@ -99,20 +99,20 @@ def del_spaces(text):
 def set_from_sets(arr):
     return sorted(set().union(*arr))
 
-def eval_string_dec(console, text):
+def eval_string_dec(text):
     try:
         result = eval(text, {"__builtins__": {}}, {})
         return dec(result)
     except ZeroDivisionError:
-        console.print(f"[error]Division by zero is not allowed[/]")
+        err_console.print(f"[error]Division by zero is not allowed[/]")
     except Exception as e:
-        console.print(f"[error]<<ERROR> Error evaluating expression: {str(e)}[/]")
+        err_console.print(f"[error]<<ERROR> Error evaluating expression: {str(e)}[/]")
 
-def eval_string_float(console, text):
+def eval_string_float(text):
     try:
-        return float(eval_string_dec(console, text))
+        return float(eval_string_dec(text))
     except Exception as e:
-        console.print(f"[error]<<ERROR> Error converting expression to float: {str(e)}[/]")
+        err_console.print(f"[error]<<ERROR> Error converting expression to float: {str(e)}[/]")
 
 def get_pending(txns, beans, acct):
     pending = []
