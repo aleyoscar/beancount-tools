@@ -230,7 +230,8 @@ def edit_bills(config, bills, account_completer, payees_completer):
     edit_cancelled = False
     while True:
         for i, bill in enumerate(bills):
-            console.print(f"[{i}] {print_bill(bill)}")
+            if len(bills) > 10: console.print(f"[{' '*(2-len(str(i)))}{i}] {print_bill(bill)}")
+            else: console.print(f"[{i}] {print_bill(bill)}")
         index_prompt = "[0]" if len(bills) == 1 else f"[0-{len(bills)-1}]"
         valid_indexes = [str(n) for n in range(len(bills))]
         if not len(bills):
