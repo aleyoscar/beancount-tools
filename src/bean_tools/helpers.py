@@ -77,7 +77,8 @@ def append_lines(console, file_path, new_data):
             file.write(f"\n{new_data}")
         return True
     except Exception as e:
-        console.print(f"[error]<<ERROR>> Error inserting lines: {str(e)}[/]")
+        console.print(f"[error]<<ERROR>> Error appending lines: {str(e)}[/]")
+        return False
 
 def insert_lines(file_path, new_data, line_start):
     new_data_arr = [l + '\n' for l in new_data.split('\n')]
