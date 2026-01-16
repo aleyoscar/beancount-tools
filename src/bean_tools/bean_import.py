@@ -18,6 +18,7 @@ from .simplefin import simplefin_load
 from .prompts import (
     console,
     err_console,
+    style,
     resolve_toolbar,
     cancel_bindings,
     cancel_toolbar,
@@ -41,8 +42,8 @@ from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from typing_extensions import Annotated
 
-def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
-    if style and color:
+def get_posting(type, default_amount, default_currency, op_cur, completer, color):
+    if color:
         type = f"<{color}>{type}</{color}>"
     account = prompt(
         HTML(f"...{type} account > "),
@@ -286,7 +287,7 @@ def bean_import(
             new_posting = None
             while new_bean.amount < new_amount:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
+                new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, "pos")
                 if new_posting is not None:
                     new_posting['amount'] = eval_string_dec(new_posting['amount'])
                     new_bean.add_posting(new_posting)
@@ -296,7 +297,7 @@ def bean_import(
             # Add debit posting
             if new_posting is not None:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
+                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg")
                 if new_posting is not None:
                     new_posting['amount'] = eval_string_dec(new_posting['amount'])
                     new_bean.add_posting(new_posting)
@@ -399,12 +400,12 @@ def bean_import(
                         new_amount = eval_string_float(new_amount)
                     while new_bean.amount < new_amount:
                         console.print(f"\n{new_bean.print()}")
-                        new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
+                        new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, "pos")
                         if new_posting is not None:
                             new_posting['amount'] = eval_string_dec(new_posting['amount'])
                             new_bean.add_posting(new_posting)
                     console.print(f"\n{new_bean.print()}")
-                    new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
+                    new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, "neg")
                     if new_posting is not None:
                         new_posting['amount'] = eval_string_dec(new_posting['amount'])
                         new_bean.add_posting(new_posting)
