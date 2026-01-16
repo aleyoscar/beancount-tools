@@ -181,6 +181,7 @@ def bean_import(
     # Parse each pending transaction
     reconcile_count = 0
     insert_count = 0
+    pending = sorted(pending, key=lambda x: x.date)
     for txn_count, txn in enumerate(pending):
         console.print(f"Parsing {txn_count+1}/{len(pending)}: {txn.print(theme=True)}")
 
