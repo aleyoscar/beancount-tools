@@ -70,6 +70,7 @@ def bean_bills(
 
     ledger_data = ledger_load(err_console, ledger)
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
+    payees_completer = FuzzyCompleter(WordCompleter(ledger_data.payees, sentence=True))
     currency = ledger_data.currency if operating_currency else default_currency
 
     console.print(f"LEDGER File: [file]{ledger}[/]")
@@ -83,7 +84,7 @@ def bean_bills(
         err_console.print("\n[error]Invalid config JSON[/]\n")
         raise typer.Exit()
     if edit:
-        edit_bills(config, bills, account_completer)
+        edit_bills(config, bills, account_completer, payees_completer)
         raise typer.Exit()
     if not len(bills):
         console.print("\n[warning]No bills in config file. Please add some bills[/]")
@@ -174,7 +175,7 @@ def bean_bills(
 
     raise typer.Exit()
 
-def edit_bills(config, bills, account_completer):
+def edit_bills(config, bills, account_completer, payees_completer):
     # Edit config file
     console.print(f"\n[warning]Editing bills configuration[/]: [file]{config}[/]\n")
     edit_cancelled = False
@@ -240,7 +241,8 @@ def edit_bills(config, bills, account_completer):
             edit_add_payee = prompt(
                 f"...Bill payee > ",
                 key_bindings=cancel_bindings,
-                bottom_toolbar=cancel_toolbar)
+                bottom_toolbar=cancel_toolbar,
+                completer=payees_completer)
             if edit_add_payee is None:
                 continue
             bills.append({
@@ -333,6 +335,7 @@ def edit_bills(config, bills, account_completer):
                 f"...Bill payee > ",
                 key_bindings=cancel_bindings,
                 bottom_toolbar=cancel_toolbar,
+                completer=payees_completer,
                 default=bills[index]['payee'])
             if edit_edit_payee is None:
                 continue
