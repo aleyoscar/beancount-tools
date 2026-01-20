@@ -58,6 +58,9 @@ def bean_bills(
         "--output", "-o",
         help="The output file to write to instead of stdout",
         show_default=False, exists=False)]=None,
+    list_bills: Annotated[bool, typer.Option(
+        "--list", "-l",
+        help="List the current bills in the config")]=False,
     month: Annotated[str, typer.Option(
         "--month", "-m",
         help="Specify the billing month in the format YYYY-MM",
@@ -103,12 +106,18 @@ def bean_bills(
         edit_bills(config, bills, account_completer, payees_completer)
         raise typer.Exit()
     if not len(bills):
-        console.print("\n[warning]No bills in config file. Please add some bills[/]")
+        console.print("\n[warning]No bills in config file. Please add some bills[/]\n")
         raise typer.Exit()
 
     spacing = 0
     for bill in bills:
         spacing = max(spacing, len(bill['tag']))
+
+    if list_bills:
+        console.print(f"\nBills in config file:\n")
+        for bill in bills:
+            console.print(print_bill(bill, spacing))
+        raise typer.Exit()
 
     # Check for unpaid, pending and missing bills
     buffer = []
