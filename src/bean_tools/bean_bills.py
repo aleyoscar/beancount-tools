@@ -85,6 +85,9 @@ def bean_bills(
     set_bill: Annotated[str, typer.Option(
         "--set-bill", "-b",
         help="Set a specific bill")]='',
+    pay_bill: Annotated[str, typer.Option(
+        "--pay-bill", "-p",
+        help="Pay a specific bill")]='',
 ):
     """
     Review and keep track of bill payments in a beancount ledger
@@ -147,78 +150,96 @@ def bean_bills(
             bills[i]['amount'] = cur(payment_txn.amount)
         console.print(print_bill(bills[i], spacing))
 
-    # Add missing bills
-    missing = [b for b in bills if b['status'] == 'missing']
-    buffer = []
-    if set_bill and (not len(missing) or not any(b['tag'] == set_bill for b in missing)):
-        console.print(f"\nBill [string]'{set_bill}'[/] is not missing in [date]{month}[/]\n")
-        raise typer.Exit()
-    if set_bill and not any(b['tag'] == set_bill for b in bills):
-        err_console.print(f"\n[error]No bill with the name [string]'{set_bill}'[/] exists[/]\n")
-        raise typer.Exit()
-    if len(missing):
-        missing_prompt = 'y'
-        if not set_bill:
-            missing_prompt = prompt(
-                f"\n...Would you like to insert missing bills? [Y/n] > ",
-                default='y',
-                bottom_toolbar=confirm_toolbar,
-                validator=ValidOptions(['y', 'n'])).lower()
-        if missing_prompt == 'y':
-            for bill in missing:
-                if set_bill and set_bill != bill['tag']:
-                    continue
-                console.print(f"\n[answer]Inserting bill [string]\'{bill['tag']}\'[/][/]\n")
-                bill_date = datetime.strptime(f"{month}-{bill['due']}", "%Y-%m-%d").date()
-                new_bill = new_bean(
-                    date=bill_date,
-                    flag='!',
-                    payee=bill['payee'],
-                    tags=['bill'],
-                    links=[f"{bill['tag']}-{bill_date.strftime('%Y-%m')}"],
-                    postings=[])
-                new_bill.add_posting({"account": bill['account'], "amount": float(bill['amount']), "currency": currency})
-                new_bill.add_posting({"account": bill['liability'], "amount": -float(bill['amount']), "currency": currency})
-                console.print(f"{new_bill}")
-                bill_amount = prompt(
-                    f"...Update bill amount? > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    validator=valid_float,
-                    default=bill['amount'])
-                if bill_amount is None:
-                    continue
-                new_bill.update(postings=[])
-                new_bill.add_posting({"account": bill['account'], "amount": float(bill_amount), "currency": currency})
-                new_bill.add_posting({"account": bill['liability'], "amount": -float(bill_amount), "currency": currency})
-                console.print(f"\n{new_bill}")
-                buffer.append(new_bill)
-                if output:
-                    append_lines(output, new_bill.print())
+    if not pay_bill:
+        # Add missing bills
+        missing = [b for b in bills if b['status'] == 'missing']
+        buffer = []
+        if set_bill and (not len(missing) or not any(b['tag'] == set_bill for b in missing)):
+            console.print(f"\nBill [string]'{set_bill}'[/] is not missing in [date]{month}[/]\n")
+            raise typer.Exit()
+        if set_bill and not any(b['tag'] == set_bill for b in bills):
+            err_console.print(f"\n[error]No bill with the name [string]'{set_bill}'[/] exists[/]\n")
+            raise typer.Exit()
+        if len(missing):
+            missing_prompt = 'y'
+            if not set_bill:
+                missing_prompt = prompt(
+                    f"\n...Would you like to insert missing bills? [Y/n] > ",
+                    default='y',
+                    bottom_toolbar=confirm_toolbar,
+                    validator=ValidOptions(['y', 'n'])).lower()
+            if missing_prompt == 'y':
+                for bill in missing:
+                    if set_bill and set_bill != bill['tag']:
+                        continue
+                    console.print(f"\n[answer]Inserting bill [string]\'{bill['tag']}\'[/][/]\n")
+                    bill_date = datetime.strptime(f"{month}-{bill['due']}", "%Y-%m-%d").date()
+                    new_bill = new_bean(
+                        date=bill_date,
+                        flag='!',
+                        payee=bill['payee'],
+                        tags=['bill'],
+                        links=[f"{bill['tag']}-{bill_date.strftime('%Y-%m')}"],
+                        postings=[])
+                    new_bill.add_posting({"account": bill['account'], "amount": float(bill['amount']), "currency": currency})
+                    new_bill.add_posting({"account": bill['liability'], "amount": -float(bill['amount']), "currency": currency})
+                    console.print(f"{new_bill}")
+                    bill_amount = prompt(
+                        f"...Update bill amount? > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar,
+                        validator=valid_float,
+                        default=bill['amount'])
+                    if bill_amount is None:
+                        continue
+                    new_bill.update(postings=[])
+                    new_bill.add_posting({"account": bill['account'], "amount": float(bill_amount), "currency": currency})
+                    new_bill.add_posting({"account": bill['liability'], "amount": -float(bill_amount), "currency": currency})
+                    console.print(f"\n{new_bill}")
+                    buffer.append(new_bill)
+                    if output:
+                        append_lines(output, new_bill.print())
 
-            console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
-            for bill in buffer:
-                console.print(bill)
-            if set_bill: raise typer.Exit()
+                console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
+                for bill in buffer:
+                    console.print(bill)
+                if set_bill: raise typer.Exit()
 
     # Pay unpaid bills
     unpaid = [b for b in bills if b['status'] == 'unpaid']
     buffer = []
+    if pay_bill:
+        if not len(unpaid):
+            console.print(f"\nNo bills to pay for in [date]{month}[/] or bills are missing\n")
+            raise typer.Exit()
+        if not any(b['tag'] == pay_bill for b in bills):
+            console.print(f"\n[string]'{pay_bill}'[/] is not a valid bill\n")
+            raise typer.Exit()
+        if not any(b['tag'] == pay_bill for b in unpaid):
+            console.print(f"\n[string]'{pay_bill}'[/] is either missing or paid for\n")
+            raise typer.Exit()
     if len(unpaid):
-        unpaid_prompt = prompt(
-            f"\n...Would you like to pay your unpaid bills? [Y/n] > ",
-            default='y',
-            bottom_toolbar=confirm_toolbar,
-            validator=ValidOptions(['y', 'n'])).lower()
+        unpaid_prompt = 'y'
+        if not pay_bill:
+            unpaid_prompt = prompt(
+                f"\n...Would you like to pay your unpaid bills? [Y/n] > ",
+                default='y',
+                bottom_toolbar=confirm_toolbar,
+                validator=ValidOptions(['y', 'n'])).lower()
         if unpaid_prompt == 'y':
             for bill in unpaid:
-                pay_prompt = prompt(
-                    f"\n...Pay for '{bill['tag']}'? [Y/n] > ",
-                    default='y',
-                    bottom_toolbar=confirm_toolbar,
-                    validator=ValidOptions(['y', 'n'])).lower()
-                if pay_prompt == 'n':
+                if pay_bill and bill['tag'] != pay_bill:
                     continue
+                elif not pay_bill:
+                    pay_prompt = prompt(
+                        f"\n...Pay for '{bill['tag']}'? [Y/n] > ",
+                        default='y',
+                        bottom_toolbar=confirm_toolbar,
+                        validator=ValidOptions(['y', 'n'])).lower()
+                    if pay_prompt == 'n':
+                        continue
+                else:
+                    console.print(f"\nPaying for bill [string]'{pay_bill}'[/]\n")
                 new_bill_txn = bill['bill_txn']
                 new_bill_amount = prompt(
                     f"...Payment amount? > ",
