@@ -81,7 +81,10 @@ def bean_bills(
         help="Skip the currency prompt when inserting and use the ledger's operating_currency")]=False,
     default_currency: Annotated[str, typer.Option(
         "--default-currency", "-d",
-        help="Use the specified currency when inserting transactions")]='USD'
+        help="Use the specified currency when inserting transactions")]='USD',
+    set_bill: Annotated[str, typer.Option(
+        "--set-bill", "-b",
+        help="Set a specific bill")]='',
 ):
     """
     Review and keep track of bill payments in a beancount ledger
@@ -147,15 +150,25 @@ def bean_bills(
     # Add missing bills
     missing = [b for b in bills if b['status'] == 'missing']
     buffer = []
+    if set_bill and (not len(missing) or not any(b['tag'] == set_bill for b in missing)):
+        console.print(f"\nBill [string]'{set_bill}'[/] is not missing in [date]{month}[/]\n")
+        raise typer.Exit()
+    if set_bill and not any(b['tag'] == set_bill for b in bills):
+        err_console.print(f"\n[error]No bill with the name [string]'{set_bill}'[/] exists[/]\n")
+        raise typer.Exit()
     if len(missing):
-        missing_prompt = prompt(
-            f"\n...Would you like to insert missing bills? [Y/n] > ",
-            default='y',
-            bottom_toolbar=confirm_toolbar,
-            validator=ValidOptions(['y', 'n'])).lower()
+        missing_prompt = 'y'
+        if not set_bill:
+            missing_prompt = prompt(
+                f"\n...Would you like to insert missing bills? [Y/n] > ",
+                default='y',
+                bottom_toolbar=confirm_toolbar,
+                validator=ValidOptions(['y', 'n'])).lower()
         if missing_prompt == 'y':
             for bill in missing:
-                console.print(f"\n[answer]Inserting bill \'{bill['tag']}\'[/]\n")
+                if set_bill and set_bill != bill['tag']:
+                    continue
+                console.print(f"\n[answer]Inserting bill [string]\'{bill['tag']}\'[/][/]\n")
                 bill_date = datetime.strptime(f"{month}-{bill['due']}", "%Y-%m-%d").date()
                 new_bill = new_bean(
                     date=bill_date,
@@ -186,6 +199,7 @@ def bean_bills(
             console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
             for bill in buffer:
                 console.print(bill)
+            if set_bill: raise typer.Exit()
 
     # Pay unpaid bills
     unpaid = [b for b in bills if b['status'] == 'unpaid']
