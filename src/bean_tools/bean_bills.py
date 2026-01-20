@@ -172,7 +172,16 @@ def bean_bills(
                 for bill in missing:
                     if set_bill and set_bill != bill['tag']:
                         continue
-                    console.print(f"\n[answer]Inserting bill [string]\'{bill['tag']}\'[/][/]\n")
+                    elif not set_bill:
+                        insert_prompt = prompt(
+                            f"\n...Insert bill for '{bill['tag']}'? [Y/n] > ",
+                            default='y',
+                            bottom_toolbar=confirm_toolbar,
+                            validator=ValidOptions(['y', 'n'])).lower()
+                        if insert_prompt == 'n':
+                            continue
+                    else:
+                        console.print(f"\n[answer]Inserting bill [string]\'{bill['tag']}\'[/][/]")
                     bill_date = datetime.strptime(f"{month}-{bill['due']}", "%Y-%m-%d").date()
                     new_bill = new_bean(
                         date=bill_date,
@@ -183,7 +192,7 @@ def bean_bills(
                         postings=[])
                     new_bill.add_posting({"account": bill['account'], "amount": float(bill['amount']), "currency": currency})
                     new_bill.add_posting({"account": bill['liability'], "amount": -float(bill['amount']), "currency": currency})
-                    console.print(f"{new_bill}")
+                    console.print(f"\n{new_bill}")
                     bill_amount = prompt(
                         f"...Update bill amount? > ",
                         key_bindings=cancel_bindings,
@@ -200,7 +209,7 @@ def bean_bills(
                     if output:
                         append_lines(output, new_bill.print())
 
-                console.print(f"[pos]Bills inserted {'-'*64}[/]\n")
+                if len(buffer): console.print(f"\n[pos]Bills inserted {'-'*64}[/]\n")
                 for bill in buffer:
                     console.print(bill)
                 if set_bill: raise typer.Exit()
@@ -239,7 +248,7 @@ def bean_bills(
                     if pay_prompt == 'n':
                         continue
                 else:
-                    console.print(f"\nPaying for bill [string]'{pay_bill}'[/]\n")
+                    console.print(f"\n[answer]Paying for bill [string]'{pay_bill}'[/][/]\n")
                 new_bill_txn = bill['bill_txn']
                 new_bill_amount = prompt(
                     f"...Payment amount? > ",
