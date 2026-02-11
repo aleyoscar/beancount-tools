@@ -120,6 +120,10 @@ def bean_inquiry(
         "--list", "-l",
         help="List all queries available in ledger",
         show_default=False)] = False,
+    output: Annotated[Path, typer.Option(
+        "--output", "-o",
+        help="The output file to write to instead of stdout",
+        show_default=False, exists=False)]=None,
     version: Annotated[bool, typer.Option(
         "--version", "-v",
         help="Show version info and exit",
@@ -204,9 +208,19 @@ def bean_inquiry(
     try:
         console.print()
         if format == 'text':
-            render_text(rtypes, rrows, ledger_data.options['dcontext'], sys.stdout)
+            if output:
+                with output.open('w', encoding='utf-8') as f:
+                    render_text(rtypes, rrows, ledger_data.options['dcontext'], file=f)
+            else:
+                render_text(rtypes, rrows, ledger_data.options['dcontext'], sys.stdout)
         elif format == 'csv':
-            render_csv(rtypes, rrows, ledger_data.options['dcontext'], sys.stdout)
+            if output:
+                with output.open('w', encoding='utf-8') as f:
+                    render_csv(rtypes, rrows, ledger_data.options['dcontext'], file=f)
+            else:
+                render_csv(rtypes, rrows, ledger_data.options['dcontext'], sys.stdout)
     except Exception as e:
         err_console.print(f"[error]Error rendering output: {str(e)}[/]")
         raise typer.Exit(code=1)
+
+    if output: console.print(f"Saved to [file]{output}[/]")
