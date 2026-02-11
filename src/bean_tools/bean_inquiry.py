@@ -136,7 +136,7 @@ def bean_inquiry(
     # Load ledger
     if ledger is None:
         err_console.print("[error]No ledger file provided. Please provide a ledger file.[/]")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     console.print(f"Loading ledger [file]{ledger}[/]")
     ledger_data = ledger_load(ledger)
 
@@ -155,20 +155,20 @@ def bean_inquiry(
     # Get query
     if not name:
         err_console.print("[error]Please provide a query name to parse")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     query_entry = next((q for q in ledger_data.queries if q.name == name), None)
     if not query_entry:
         err_console.print(f"[error]No query found with the name [string]'{name}'[/]. Valid names are:\n")
         for q in ledger_data.queries:
             console.print(q.name)
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     console.print(f"[string]{query_entry.name}[/]{query_entry.query_string}")
 
     # Get placeholders
     placeholders_result = get_placeholders(query_entry.query_string)
     if not placeholders_result:
         err_console.print("[error]Invalid placeholder format. All placeholders must be of the same type. (e.g. named: {name}, indexed: {0}, or empty: {})[/]")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
     placeholders, placeholders_type = placeholders_result
     placeholders_list = ["{" + p + "}" for p in placeholders]
     placeholders_string = ', '.join(sorted(placeholders_list))
@@ -182,7 +182,7 @@ def bean_inquiry(
     # Parse parameters
     parsed_params = parse_params(params, placeholders, placeholders_type, placeholders_string)
     if parsed_params is None:
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     # Format query with parameters
     query_string = ''
@@ -197,7 +197,7 @@ def bean_inquiry(
             query_string = query_entry.query_string
     except (KeyError, IndexError, ValueError) as e:
         err_console.print(f"[error]Error formatting query with parameters: {str(e)}[/]")
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
      # Execute query
     rtypes, rrows = run_query(ledger_data, query_string)
