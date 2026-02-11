@@ -161,6 +161,11 @@ def flag_callback(flag_str: str):
         raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
     return flag_str
 
+def format_callback(format_str):
+    if format_str.lower() != 'text' and format_str.lower() != 'csv':
+        raise BadParameter("Invalid format string, please enter either 'text' or 'csv'.")
+    return format_str
+
 def period_callback(date_str: str):
     if not date_str: return date_str
     error = "Please enter a valid date format (YYYY, YYYY-MM or YYYY-MM-DD)"

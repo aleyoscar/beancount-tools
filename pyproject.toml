@@ -13,7 +13,8 @@ dependencies = [
     "ofxparse (>=0.21,<0.22)",
     "beancount (>=3.1.0,<4.0.0)",
     "requests (>=2.32.5,<3.0.0)",
-    "python-dotenv (>=1.2.1,<2.0.0)"
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "beanquery (>=0.2.0,<0.3.0)"
 ]
 
 [tool.poetry]

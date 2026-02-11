@@ -7,6 +7,7 @@ A set of Beancount CLI tools
 - [import](#import)
 - [download](#download)
 - [bills](#bills)
+- [inquiry](#inquiry)
 
 ```
 Usage: bean-tools [OPTIONS] COMMAND [ARGS]...
@@ -115,6 +116,29 @@ Review and keep track of bill payments in a beancount ledger
 │ --set-bill            -b      TEXT  Set a specific bill                     │
 │ --pay-bill            -p      TEXT  Pay a specific bill                     │
 │ --help                              Show this message and exit.             │
+╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+## inquiry
+
+```
+Usage: bean-tools inquiry [OPTIONS] LEDGER [NAME] [PARAMS]...
+
+Inject parameters into beancount queries specified in your ledger
+
+╭─ Arguments ─────────────────────────────────────────────────────────────────╮
+│ *    ledger      FILE         The beancount ledger file to parse            │
+│                               [default: None]                               │
+│                               [required]                                    │
+│      name        [NAME]       The name of the query to parse                │
+│      params      [PARAMS]...  List of parameters to inject                  │
+╰─────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────╮
+│ --format   -f      TEXT  Output format: 'text' or 'csv' [default: text]     │
+│ --check    -c            Check a query for what parameters are needed       │
+│ --list     -l            List all queries available in ledger               │
+│ --version  -v            Show version info and exit                         │
+│ --help                   Show this message and exit.                        │
 ╰─────────────────────────────────────────────────────────────────────────────╯
 ```
 

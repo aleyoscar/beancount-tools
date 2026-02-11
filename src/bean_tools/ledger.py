@@ -1,5 +1,5 @@
 from beancount import loader
-from beancount.core.data import Transaction, Posting, Open
+from beancount.core.data import Transaction, Posting, Open, Query
 from beancount.core.amount import Amount
 from beancount.parser import printer
 from .helpers import cur, dec, del_spaces, set_from_sets
@@ -11,6 +11,9 @@ import datetime
 class Ledger:
     def __init__(self, entries, errors, options):
         self.title = options.get('title', 'Unknown')
+        self.entries = entries
+        self.errors = errors
+        self.options = options
         currency = options.get('operating_currency', [])
         self.currency = currency[0] if len(currency) else ''
         self.transactions = [Bean(t) for t in entries if isinstance(t, Transaction)]
@@ -19,6 +22,7 @@ class Ledger:
         self.links = set_from_sets([t.links for t in entries if isinstance(t, Transaction)])
         self.errors = [str(err) for err in errors] if errors else []
         self.payees = sorted(set([t.payee for t in entries if isinstance(t, Transaction) and t.payee]))
+        self.queries = [q for q in entries if isinstance(q, Query)]
 
 class Bean:
     def __init__(self, entry):
