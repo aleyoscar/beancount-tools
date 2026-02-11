@@ -158,7 +158,7 @@ def account_callback(acct_str: str):
 
 def flag_callback(flag_str: str):
     if flag_str != '*' and flag_str != '!':
-        raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
+        raise BadParameter("Invalid flag string, please enter either '*' or '!'.")
     return flag_str
 
 def format_callback(format_str):
