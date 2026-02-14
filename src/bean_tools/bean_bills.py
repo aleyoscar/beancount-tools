@@ -53,7 +53,7 @@ def print_bill(bill, spacing=20):
 def bean_bills(
     ledger: Annotated[Path, typer.Argument(
         help="The beancount ledger file to parse",
-        exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
+        exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)] = None,
     output: Annotated[Path, typer.Option(
         "--output", "-o",
         help="The output file to write to instead of stdout",
@@ -92,6 +92,10 @@ def bean_bills(
     """
     Review and keep track of bill payments in a beancount ledger
     """
+
+    if ledger is None:
+        err_console.print("[error]No ledger file provided. Please provide a ledger file.[/]")
+        raise typer.Exit(code=1)
 
     ledger_data = ledger_load(ledger)
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
