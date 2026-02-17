@@ -93,6 +93,9 @@ def bean_bills(
     Review and keep track of bill payments in a beancount ledger
     """
 
+    # Load ledger
+    if ledger is None:
+        raise typer.BadParameter("Ledger file is required")
     ledger_data = ledger_load(ledger)
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
     payees_completer = FuzzyCompleter(WordCompleter(ledger_data.payees, sentence=True))
