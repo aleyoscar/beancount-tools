@@ -135,8 +135,7 @@ def bean_inquiry(
 
     # Load ledger
     if ledger is None:
-        err_console.print("[error]No ledger file provided. Please provide a ledger file.[/]")
-        raise typer.Exit(code=1)
+        raise typer.BadParameter("Ledger file is required.")
     console.print(f"Loading ledger [file]{ledger}[/]")
     ledger_data = ledger_load(ledger)
 
