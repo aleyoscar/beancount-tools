@@ -21,7 +21,8 @@ from .prompts import (
     valid_tag,
     valid_account,
     valid_float,
-    valid_day
+    valid_day,
+    valid_date
 )
 from . import __version__
 from pathlib import Path
@@ -207,6 +208,15 @@ def bean_bills(
                     new_bill.update(postings=[])
                     new_bill.add_posting({"account": bill['account'], "amount": float(bill_amount), "currency": currency})
                     new_bill.add_posting({"account": bill['liability'], "amount": -float(bill_amount), "currency": currency})
+                    new_bill_date = prompt(
+                        f"...Update bill date? > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar,
+                        validator=valid_date,
+                        default=bill_date.strftime('%Y-%m-%d'))
+                    if new_bill_date is None:
+                        continue
+                    new_bill.update(date=new_bill_date)
                     console.print(f"\n{new_bill}")
                     buffer.append(new_bill)
                     if output:
