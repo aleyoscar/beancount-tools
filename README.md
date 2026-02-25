@@ -1,6 +1,6 @@
 # bean-tools
 
-> v2.2.0
+> v2.3.0
 
 A set of Beancount CLI tools
 
