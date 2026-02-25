@@ -88,4 +88,10 @@ def bean_download(
             data = response.json()
             with open(output, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4)
-            console.print(f"Saved SimpleFIN data to [file]{output}[/]")
+            if data['errors'] and len(data['errors']):
+                console.print(f"SimpleFIN error messages:\n")
+                err_count = 1
+                for err in data['errors']:
+                    console.print(f"  {err_count}) [warning]{err}[/]")
+                    err_count += 1
+            console.print(f"\nSaved SimpleFIN data to [file]{output}[/]")
